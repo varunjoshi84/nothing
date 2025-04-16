@@ -376,6 +376,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check for upcoming matches and create notifications
+  app.post('/api/notifications/check-upcoming', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const matches = await storage.getMatches({ status: 'upcoming' });
+      
+      // Get user's favorite matches
+      const favorites = await storage.getFavoritesByUserId(userId);
+      const favoriteMatchIds = new Set(favorites.map(f => f.match.id));
+      
+      // Create notifications for favorite matches
+      for (const match of matches) {
+        if (favoriteMatchIds.has(match.id)) {
+          await notifyUpcomingMatch(storage, userId, match);
+        }
+      }
+      
+      res.json({ message: 'Notifications checked and created' });
+    } catch (error) {
+      console.error('Notification check error:', error);
+      res.status(500).json({ message: 'Server error while checking notifications' });
+    }
+  });
+
   // NOTIFICATION ROUTES
   app.get('/api/notifications', isAuthenticated, async (req, res) => {
     try {

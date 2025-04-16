@@ -592,3 +592,26 @@ export class DatabaseStorage implements IStorage {
 
 // Create and initialize the storage instance
 export const storage = new DatabaseStorage();
+
+// Create notifications for upcoming matches
+async function notifyUpcomingMatch(storage: IStorage, userId: number, match: Match) {
+  const timeUntilMatch = new Date(match.matchTime).getTime() - new Date().getTime();
+  const hoursUntilMatch = Math.floor(timeUntilMatch / (1000 * 60 * 60));
+
+  if (hoursUntilMatch === 24) { // Notify 24 hours before
+    await storage.createNotification({
+      userId,
+      message: `Upcoming match tomorrow: ${match.team1} vs ${match.team2} at ${match.venue}`,
+      read: false
+    });
+  } else if (hoursUntilMatch === 1) { // Notify 1 hour before
+    await storage.createNotification({
+      userId,
+      message: `Match starting in 1 hour: ${match.team1} vs ${match.team2}`,
+      read: false
+    });
+  }
+}
+
+// SPORTS NEWS API MOCK - Fallback if no articles in database
+//app.get('/api/sports-news/mock', async (req, res) => {
