@@ -441,18 +441,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // EXTERNAL SPORTS API
   app.get('/api/sports-news', async (req, res) => {
     try {
-      const apiKey = process.env.SPORTS_API_KEY || 'AIzaSyBkMW9C9F0wsg5Q6h8THbdv7Po3wtaOPqA';
-      const sport = req.query.sport || 'soccer';
+      const apiKey = process.env.SPORTS_API_KEY;
+      const sport = req.query.sport || 'football';
+      
+      if (!apiKey) {
+        // Return mock data structure if no API key
+        return res.json({
+          articles: []
+        });
+      }
       
       // Fetch recent news articles related to the specified sport
-      const response = await axios.get(`https://gnews.io/api/v4/search?q=${sport}&token=${apiKey}&max=5`);
+      const response = await axios.get(`https://newsapi.org/v2/everything?q=${sport}&apiKey=${apiKey}&pageSize=5`);
       
       res.json(response.data);
     } catch (error) {
       console.error('Sports API error:', error);
-      res.status(500).json({ 
-        message: 'Error fetching sports news',
-        error: error instanceof Error ? error.message : 'Unknown error'
+      // Return empty articles array on error
+      res.json({ 
+        articles: []
       });
     }
   });
