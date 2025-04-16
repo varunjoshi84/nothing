@@ -45,20 +45,22 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
   async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     try {
       setIsLoggingIn(true);
-      await login(values);
-      toast({
-        title: "Login successful",
-        description: "Welcome back to SportSync!",
-      });
-      if (onSuccess) {
-        onSuccess();
+      const result = await login(values);
+      if (result) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back to SportSync!",
+        });
+        if (onSuccess) {
+          onSuccess();
+        }
+        setLocation('/dashboard');
       }
-      setLocation('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       toast({
         title: "Login Failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
+        description: error instanceof Error ? error.message : "Please check your credentials and try again",
         variant: "destructive",
       });
     } finally {
