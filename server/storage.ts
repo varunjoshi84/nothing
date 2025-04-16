@@ -537,10 +537,11 @@ export class DatabaseStorage implements IStorage {
       });
     }
 
-    // Check if we need to add sample matches
-    // Initialize news_articles table
+    // Initialize required tables
     await db.create().table(newsArticles).ifNotExists();
-    
+    await db.create().table(notifications).ifNotExists();
+
+    // Check if we need to add sample matches
     const matchesCount = await db.select().from(matches);
     if (matchesCount.length === 0) {
       // Add sample matches
