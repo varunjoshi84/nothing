@@ -19,7 +19,6 @@ export default function Home() {
   const [newsData, setNewsData] = useState<any[]>([]);
   const [isNewsLoading, setIsNewsLoading] = useState(true);
   const [activeNewsIndex, setActiveNewsIndex] = useState(0);
-  const [activeSport, setActiveSport] = useState<'football' | 'cricket'>('football');
   
   // Fetch live matches
   const { data: matchesData, isLoading } = useQuery({
