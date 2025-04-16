@@ -22,8 +22,7 @@ export default function Home() {
   
   // Fetch live matches
   const { data: matchesData, isLoading } = useQuery({
-    queryKey: ['/api/matches', { status: 'live' }],
-    queryFn: undefined
+    queryKey: ['/api/matches', { status: 'live' }]
   });
   
   // Fetch sports news

@@ -17,14 +17,12 @@ export default function LiveScores() {
 
   // Fetch all matches
   const { data: matchesData, isLoading } = useQuery({
-    queryKey: ['/api/matches', { sportType: sportFilter, status: statusFilter }],
-    queryFn: undefined
+    queryKey: ['/api/matches', { sportType: sportFilter, status: statusFilter }]
   });
 
   // Fetch user's favorites if logged in
   const { data: favoritesData } = useQuery({
     queryKey: ['/api/favorites'],
-    queryFn: undefined,
     enabled: !!user
   });
 
