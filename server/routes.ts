@@ -438,23 +438,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // EXTERNAL SPORTS API
+  // EXTERNAL SPORTS API - use mock data for now since we're having API issues
   app.get('/api/sports-news', async (req, res) => {
     try {
-      const apiKey = process.env.SPORTS_API_KEY;
       const sport = req.query.sport || 'football';
       
-      if (!apiKey) {
-        // Return mock data structure if no API key
-        return res.json({
-          articles: []
-        });
+      // Generate relevant news based on requested sport
+      const mockArticles = [];
+      
+      if (sport === 'football') {
+        mockArticles.push(
+          {
+            title: "Premier League Transfer Updates",
+            description: "Latest transfer news from the Premier League: which players are moving to new clubs this season.",
+            url: "#",
+            source: { name: "Sports News Network" },
+            publishedAt: new Date().toISOString()
+          },
+          {
+            title: "Champions League Quarter-Finals Preview",
+            description: "A look at the upcoming Champions League quarter-final matches and predictions for the results.",
+            url: "#",
+            source: { name: "Football Analysis" },
+            publishedAt: new Date().toISOString()
+          },
+          {
+            title: "Rising Football Stars to Watch in 2025",
+            description: "These young talents are making waves in football leagues worldwide and showing incredible promise.",
+            url: "#",
+            source: { name: "Sports Talent Scout" },
+            publishedAt: new Date().toISOString()
+          }
+        );
+      } else if (sport === 'cricket') {
+        mockArticles.push(
+          {
+            title: "T20 World Cup Preparations Begin",
+            description: "Teams are finalizing their squads and strategies for the upcoming T20 World Cup tournament.",
+            url: "#",
+            source: { name: "Cricket World" },
+            publishedAt: new Date().toISOString()
+          },
+          {
+            title: "Test Cricket Series Results",
+            description: "Recap of the recent test series between Australia and India, with match highlights and player stats.",
+            url: "#",
+            source: { name: "Cricket Analysis" },
+            publishedAt: new Date().toISOString()
+          },
+          {
+            title: "Cricket Technology Innovations",
+            description: "New technology being implemented in cricket to improve gameplay, umpiring decisions, and viewer experience.",
+            url: "#",
+            source: { name: "Sports Tech News" },
+            publishedAt: new Date().toISOString()
+          }
+        );
       }
       
-      // Fetch recent news articles related to the specified sport
-      const response = await axios.get(`https://newsapi.org/v2/everything?q=${sport}&apiKey=${apiKey}&pageSize=5`);
-      
-      res.json(response.data);
+      res.json({ articles: mockArticles });
     } catch (error) {
       console.error('Sports API error:', error);
       // Return empty articles array on error

@@ -25,7 +25,6 @@ export default function Home() {
     queryKey: ['/api/matches', { status: 'live' }],
     queryFn: undefined
   });
-  const liveMatches = matchesData?.matches || [];
   
   // Fetch sports news
   useEffect(() => {
@@ -56,6 +55,9 @@ export default function Home() {
     if (newsData.length === 0) return;
     setActiveNewsIndex((prevIndex) => (prevIndex - 1 + newsData.length) % newsData.length);
   };
+  
+  // Get a count of live matches for conditional rendering
+  const liveMatchesCount = (matchesData?.matches || []).length;
   
   return (
     <>
@@ -211,9 +213,9 @@ export default function Home() {
                 <div key={index} className="h-60 bg-gray-800/50 animate-pulse rounded-xl"></div>
               ))}
             </div>
-          ) : liveMatches.length > 0 ? (
+          ) : liveMatchesCount > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {liveMatches.slice(0, 3).map((match) => (
+              {(matchesData?.matches || []).slice(0, 3).map((match: Match) => (
                 <MatchCard 
                   key={match.id} 
                   match={match}
