@@ -5,6 +5,8 @@ import {
   notifications, type Notification, type InsertNotification,
   feedback, type Feedback, type InsertFeedback
 } from "@shared/schema";
+import { eq, and, desc } from "drizzle-orm";
+import { db } from "./db";
 
 // modify the interface with any CRUD methods
 export interface IStorage {

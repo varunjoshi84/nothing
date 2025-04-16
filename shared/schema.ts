@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -94,6 +95,42 @@ export const insertFeedbackSchema = createInsertSchema(feedback).omit({
   id: true,
   createdAt: true
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  favorites: many(favorites),
+  notifications: many(notifications),
+  feedback: many(feedback)
+}));
+
+export const matchesRelations = relations(matches, ({ many }) => ({
+  favorites: many(favorites)
+}));
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+  user: one(users, {
+    fields: [favorites.userId],
+    references: [users.id]
+  }),
+  match: one(matches, {
+    fields: [favorites.matchId],
+    references: [matches.id]
+  })
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id]
+  })
+}));
+
+export const feedbackRelations = relations(feedback, ({ one }) => ({
+  user: one(users, {
+    fields: [feedback.userId],
+    references: [users.id]
+  })
+}));
 
 // Types
 export type User = typeof users.$inferSelect;
