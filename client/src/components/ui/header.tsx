@@ -97,10 +97,10 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-6">
             {!user ? (
               <div className="flex items-center space-x-3">
-                <Button variant="outline" onClick={() => setLocation("/?auth=login")}>
+                <Button variant="outline" onClick={() => setLocation("/auth?tab=login")}>
                   Login
                 </Button>
-                <Button onClick={() => setLocation("/?auth=signup")}>
+                <Button onClick={() => setLocation("/auth?tab=signup")}>
                   Sign Up
                 </Button>
               </div>
@@ -221,10 +221,10 @@ export default function Header() {
                 <div className="border-t border-gray-800 pt-4">
                   {!user ? (
                     <div className="flex flex-col space-y-3">
-                      <Button variant="outline" className="w-full" onClick={() => { setLocation("/?auth=login"); setIsOpen(false); }}>
+                      <Button variant="outline" className="w-full" onClick={() => { setLocation("/auth?tab=login"); setIsOpen(false); }}>
                         Login
                       </Button>
-                      <Button className="w-full" onClick={() => { setLocation("/?auth=signup"); setIsOpen(false); }}>
+                      <Button className="w-full" onClick={() => { setLocation("/auth?tab=signup"); setIsOpen(false); }}>
                         Sign Up
                       </Button>
                     </div>

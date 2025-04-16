@@ -9,6 +9,7 @@ import Admin from "@/pages/admin";
 import LiveScores from "@/pages/live-scores";
 import SportsCategory from "@/pages/sports-category";
 import Feedback from "@/pages/feedback";
+import AuthPage from "@/pages/auth-page";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 import { useEffect } from "react";
@@ -36,6 +37,7 @@ function Router() {
       <main className="flex-grow pt-20">
         <Switch>
           <Route path="/" component={Home} />
+          <Route path="/auth" component={AuthPage} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/admin" component={Admin} />
           <Route path="/live-scores" component={LiveScores} />
