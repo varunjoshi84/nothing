@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { User } from "../../shared/schema";
 import type { LoginData, RegisterData } from "../../shared/schema";
@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // Simple export for provider
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
-  
+
   // User query to check logged in status
   const {
     data: user,

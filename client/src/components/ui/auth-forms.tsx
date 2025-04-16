@@ -29,7 +29,7 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
   const { login, register } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  
+
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -39,33 +39,44 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
       rememberMe: false
     },
   });
-  
+
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  
+
   async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     try {
       setIsLoggingIn(true);
-      await login(values);
-      toast({
-        title: "Login successful",
-        description: "Welcome back to SportSync!",
-      });
-      if (onSuccess) {
-        onSuccess();
+      const response = await login(values); // Assuming login returns a response
+
+      if (response.ok) { // Check for successful login response
+        toast({
+          title: "Login successful",
+          description: "Welcome back to SportSync!",
+        });
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          setLocation("/dashboard");
+        }
       } else {
-        setLocation("/dashboard");
+        const responseData = await response.json();
+        toast({
+          title: "Login Failed",
+          description: responseData.message || "Invalid credentials",
+          variant: "destructive",
+        });
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "An error occurred during login",
+        title: "Error",
+        description: "An error occurred during login",
         variant: "destructive",
       });
     } finally {
       setIsLoggingIn(false);
     }
   }
-  
+
   // Register form
   const registerForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -76,9 +87,9 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
       confirmPassword: ""
     },
   });
-  
+
   const [isRegistering, setIsRegistering] = useState(false);
-  
+
   async function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
     try {
       setIsRegistering(true);
@@ -102,7 +113,7 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
       setIsRegistering(false);
     }
   }
-  
+
   return (
     <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto p-6 bg-black/70 backdrop-blur-xl rounded-xl border border-gray-800 shadow-[0_0_15px_rgba(230,0,0,0.3)]">
       {/* Login Form */}
@@ -191,7 +202,7 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
           </Button>
         </div>
       </div>
-      
+
       {/* Signup Form */}
       <div className={`space-y-6 p-2 ${tab === 'login' ? 'hidden md:block' : ''}`}>
         <h2 className="text-2xl font-heading font-bold mb-6">Sign Up</h2>
