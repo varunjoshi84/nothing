@@ -121,14 +121,12 @@ export default function Admin() {
   // Fetch all matches
   const { data: matchesData, isLoading: isLoadingMatches } = useQuery({
     queryKey: ['/api/matches'],
-    queryFn: undefined,
     enabled: !!user && user.role === 'admin',
   });
 
   // Fetch all feedback submissions
   const { data: feedbackData, isLoading: isLoadingFeedback } = useQuery({
     queryKey: ['/api/admin/feedback'],
-    queryFn: undefined,
     enabled: !!user && user.role === 'admin' && activeTab === 'feedback',
   });
 

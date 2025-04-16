@@ -22,14 +22,12 @@ export default function SportsCategory({ type }: SportsCategoryProps) {
   
   // Fetch matches by sport type
   const { data: matchesData, isLoading: isMatchesLoading } = useQuery({
-    queryKey: ['/api/matches', { sportType }],
-    queryFn: undefined
+    queryKey: ['/api/matches', { sportType }]
   });
   
   // Fetch user's favorites if logged in
   const { data: favoritesData } = useQuery({
     queryKey: ['/api/favorites'],
-    queryFn: undefined,
     enabled: !!user
   });
   
