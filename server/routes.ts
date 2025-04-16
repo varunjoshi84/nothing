@@ -169,21 +169,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/login', validateRequest(loginSchema), (req, res, next) => {
+  app.post('/api/auth/login', validateRequest(loginSchema), (req, res) => {
     passport.authenticate('local', (err, user, info) => {
       if (err) {
-        return next(err);
+        return res.status(500).json({ message: 'Internal server error' });
       }
       if (!user) {
-        return res.status(401).json({ message: info.message });
+        return res.status(401).json({ message: info?.message || 'Invalid credentials' });
       }
-      req.login(user, (err) => {
-        if (err) {
-          return next(err);
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return res.status(500).json({ message: 'Error during login' });
         }
         return res.json({ user });
       });
-    })(req, res, next);
+    })(req, res);
   });
 
   app.post('/api/auth/logout', (req, res) => {
