@@ -1,0 +1,112 @@
+I want to build a modern, feature-rich Sports Web Application from scratch using PHP, MySQL for backend and HTML/CSS/JavaScript for frontend. I have outlined the features and flow I want:
+
+🏟️ General Flow:
+Create a Landing Page as the home screen —
+
+It should show a Welcome Message.
+
+Options for Login and Sign Up side-by-side.
+
+The UI should be modern, using dynamic black, blur, red gradient styling.
+
+Once the user logs in or signs up, they should land on a Dashboard Page with:
+
+Personalized welcome like: “Welcome, [Username]!”
+
+Options to Update profile, Delete account, or View match notifications.
+
+👤 User Features:
+Register with form validation (No duplicate emails/usernames).
+
+Login system.
+
+Update user details.
+
+Delete account.
+
+View Live Scoreboard even if not logged in.
+
+If logged in, select favorite matches and get email reminders (Use PHPMailer for sending emails).
+
+Notification system for match updates and upcoming games.
+
+Suggestion/Feedback form for website improvements (submits into database).
+
+🧑‍💼 Admin Features:
+Admin can Add, Update, Delete Matches.
+
+Admin can update Scores live.
+
+Admin can add News articles, match highlights.
+
+Admin can view and manage user feedback.
+
+Admin panel should have clear, intuitive navigation.
+
+Admin should be able to toggle matches as “Upcoming,” “Live,” “Completed”.
+
+📡 API Integration:
+Integrate an external API using this key:
+"AIzaSyBkMW9C9F0wsg5Q6h8THbdv7Po3wtaOPqA"
+Use this for:
+
+Fetching real-time sports articles.
+
+Displaying player stats.
+
+Displaying live scores dynamically.
+
+⚽🏏 Sports Category Navigation:
+Navbar should include:
+
+Home
+
+Football
+
+Cricket
+Each sport should have its own dedicated page styled identically to the main page but with its specific data fetched dynamically.
+
+📧 Email Features:
+Non-logged users can still see live scores.
+
+Logged-in users will receive email reminders for their selected favorite match.
+
+Use PHPMailer for email sending.
+
+💡 UI/UX Design:
+Uniform, modern dark theme.
+
+Black, red, blur-gradient based layout.
+
+Responsive design for both mobile and desktop.
+
+Avoid duplicate components like navbars or headers.
+
+Smooth navigation and transitions.
+
+⚠️ Extra Features You Can Add:
+Notification badges for new scores.
+
+Auto-logout after inactivity.
+
+Player profile section with their live stats.
+
+A feedback section that stores suggestions in the database.
+
+Footer on every page with contact, about, and social media links.
+
+💻 Technical Stack:
+Frontend: HTML, CSS (modern, dark UI), JavaScript.
+
+Backend: PHP.
+
+Database: MySQL (sportsapp).
+
+External Data: Google Gemini API for live stats and news.
+
+Email System: PHPMailer.
+
+👉 Note: I have already created the sportsapp database with existing user and match data — so ensure the new code integrates smoothly without data loss.
+
+⚡ Expected Output:
+A production-ready PHP web app with smooth navigation, proper authentication, real-time scores, and personalized user interaction.
