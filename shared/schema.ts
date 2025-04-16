@@ -70,6 +70,19 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow()
 });
 
+// News Articles table
+export const newsArticles = pgTable('news_articles', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  sportType: sportTypeEnum('sport_type'),
+  url: text('url'),
+  source: text('source').notNull(),
+  publishedAt: timestamp('published_at'),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+
 // Schema validation for inserts
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -94,6 +107,11 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 export const insertFeedbackSchema = createInsertSchema(feedback).omit({
   id: true,
   createdAt: true
+});
+
+export const insertNewsArticleSchema = createInsertSchema(newsArticles).omit({
+    id: true,
+    createdAt: true
 });
 
 // Relations
@@ -148,6 +166,10 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 
+export type NewsArticle = typeof newsArticles.$inferSelect;
+export type InsertNewsArticle = z.infer<typeof insertNewsArticleSchema>;
+
+
 // Login schema
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -169,15 +191,24 @@ export const registerSchema = insertUserSchema.pick({
   path: ["confirmPassword"]
 });
 
+export const newsArticleSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  sportType: z.enum(['football', 'cricket']),
+  url: z.string().optional(),
+  source: z.string(),
+  publishedAt: z.string(),
+});
+
 export type RegisterData = z.infer<typeof registerSchema>;
 
 // Feedback schema
-export const feedbackFormSchema = insertFeedbackSchema.pick({
-  name: true,
-  email: true,
-  category: true, 
-  message: true,
-  subscribeToNewsletter: true
+export const feedbackFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  category: z.string().min(1, "Category is required"),
+  message: z.string().min(1, "Message is required"),
+  subscribeToNewsletter: z.boolean().optional()
 });
 
 export type FeedbackFormData = z.infer<typeof feedbackFormSchema>;

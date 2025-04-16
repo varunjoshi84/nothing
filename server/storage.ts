@@ -3,7 +3,8 @@ import {
   matches, type Match, type InsertMatch,
   favorites, type Favorite, type InsertFavorite,
   notifications, type Notification, type InsertNotification,
-  feedback, type Feedback, type InsertFeedback
+  feedback, type Feedback, type InsertFeedback,
+  newsArticles, type NewsArticle, type InsertNewsArticle
 } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { db } from "./db";
@@ -17,28 +18,33 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
-  
+
   // Match methods
   getMatch(id: number): Promise<Match | undefined>;
   getMatches(filters?: { sportType?: string; status?: string }): Promise<Match[]>;
   createMatch(match: InsertMatch): Promise<Match>;
   updateMatch(id: number, match: Partial<InsertMatch>): Promise<Match | undefined>;
   deleteMatch(id: number): Promise<boolean>;
-  
+
   // Favorite methods
   getFavoritesByUserId(userId: number): Promise<(Favorite & { match: Match })[]>;
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
   removeFavorite(userId: number, matchId: number): Promise<boolean>;
   isFavorite(userId: number, matchId: number): Promise<boolean>;
-  
+
   // Notification methods
   getNotificationsByUserId(userId: number): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<Notification | undefined>;
-  
+
   // Feedback methods
   getFeedback(): Promise<Feedback[]>;
   submitFeedback(feedbackData: InsertFeedback): Promise<Feedback>;
+
+  // News Article methods
+  createNewsArticle(article: InsertNewsArticle): Promise<NewsArticle>;
+  getNewsArticles(sportType?: string): Promise<NewsArticle[]>;
+  deleteNewsArticle(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -47,12 +53,14 @@ export class MemStorage implements IStorage {
   private favorites: Map<number, Favorite>;
   private notifications: Map<number, Notification>;
   private feedbacks: Map<number, Feedback>;
-  
+  private newsArticles: Map<number, NewsArticle>;
+
   private userIdCounter: number;
   private matchIdCounter: number;
   private favoriteIdCounter: number;
   private notificationIdCounter: number;
   private feedbackIdCounter: number;
+  private newsArticleIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -60,13 +68,15 @@ export class MemStorage implements IStorage {
     this.favorites = new Map();
     this.notifications = new Map();
     this.feedbacks = new Map();
-    
+    this.newsArticles = new Map();
+
     this.userIdCounter = 1;
     this.matchIdCounter = 1;
     this.favoriteIdCounter = 1;
     this.notificationIdCounter = 1;
     this.feedbackIdCounter = 1;
-    
+    this.newsArticleIdCounter = 1;
+
     // Add default admin user
     this.createUser({
       username: 'admin',
@@ -74,7 +84,7 @@ export class MemStorage implements IStorage {
       password: '$2b$10$OI.0/FxL1bfXVU3KQhKUKuw8dBVS.KbPgqrA8UKa9xSbZiW.MDBLu', // hashed 'admin123'
       role: 'admin'
     });
-    
+
     // Add some sample matches
     this.addSampleMatches();
   }
@@ -107,7 +117,7 @@ export class MemStorage implements IStorage {
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
     const user = this.users.get(id);
     if (!user) return undefined;
-    
+
     const updatedUser: User = { ...user, ...userData };
     this.users.set(id, updatedUser);
     return updatedUser;
@@ -115,20 +125,20 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     const deleted = this.users.delete(id);
-    
+
     // Also delete related user data
     for (const [favoriteId, favorite] of this.favorites.entries()) {
       if (favorite.userId === id) {
         this.favorites.delete(favoriteId);
       }
     }
-    
+
     for (const [notificationId, notification] of this.notifications.entries()) {
       if (notification.userId === id) {
         this.notifications.delete(notificationId);
       }
     }
-    
+
     return deleted;
   }
 
@@ -139,17 +149,17 @@ export class MemStorage implements IStorage {
 
   async getMatches(filters?: { sportType?: string; status?: string }): Promise<Match[]> {
     let matches = Array.from(this.matches.values());
-    
+
     if (filters) {
       if (filters.sportType) {
         matches = matches.filter(match => match.sportType === filters.sportType);
       }
-      
+
       if (filters.status) {
         matches = matches.filter(match => match.status === filters.status);
       }
     }
-    
+
     // Sort by most recent first
     return matches.sort((a, b) => new Date(b.matchTime).getTime() - new Date(a.matchTime).getTime());
   }
@@ -165,7 +175,7 @@ export class MemStorage implements IStorage {
   async updateMatch(id: number, matchData: Partial<InsertMatch>): Promise<Match | undefined> {
     const match = this.matches.get(id);
     if (!match) return undefined;
-    
+
     const updatedMatch: Match = { ...match, ...matchData };
     this.matches.set(id, updatedMatch);
     return updatedMatch;
@@ -173,14 +183,14 @@ export class MemStorage implements IStorage {
 
   async deleteMatch(id: number): Promise<boolean> {
     const deleted = this.matches.delete(id);
-    
+
     // Also delete related match data
     for (const [favoriteId, favorite] of this.favorites.entries()) {
       if (favorite.matchId === id) {
         this.favorites.delete(favoriteId);
       }
     }
-    
+
     return deleted;
   }
 
@@ -188,7 +198,7 @@ export class MemStorage implements IStorage {
   async getFavoritesByUserId(userId: number): Promise<(Favorite & { match: Match })[]> {
     const userFavorites = Array.from(this.favorites.values())
       .filter(favorite => favorite.userId === userId);
-    
+
     return userFavorites.map(favorite => {
       const match = this.matches.get(favorite.matchId);
       if (!match) {
@@ -204,7 +214,7 @@ export class MemStorage implements IStorage {
     if (exists) {
       throw new Error("Match is already in favorites");
     }
-    
+
     const id = this.favoriteIdCounter++;
     const createdAt = new Date();
     const newFavorite: Favorite = { ...favorite, id, createdAt };
@@ -216,7 +226,7 @@ export class MemStorage implements IStorage {
     const favorite = Array.from(this.favorites.values()).find(
       f => f.userId === userId && f.matchId === matchId
     );
-    
+
     if (!favorite) return false;
     return this.favorites.delete(favorite.id);
   }
@@ -245,7 +255,7 @@ export class MemStorage implements IStorage {
   async markNotificationAsRead(id: number): Promise<Notification | undefined> {
     const notification = this.notifications.get(id);
     if (!notification) return undefined;
-    
+
     const updatedNotification: Notification = { ...notification, read: true };
     this.notifications.set(id, updatedNotification);
     return updatedNotification;
@@ -265,10 +275,31 @@ export class MemStorage implements IStorage {
     return newFeedback;
   }
 
+    // News Article methods
+  async createNewsArticle(article: InsertNewsArticle): Promise<NewsArticle> {
+    const id = this.newsArticleIdCounter++;
+    const createdAt = new Date();
+    const newArticle: NewsArticle = { ...article, id, createdAt };
+    this.newsArticles.set(id, newArticle);
+    return newArticle;
+  }
+
+  async getNewsArticles(sportType?: string): Promise<NewsArticle[]> {
+    let articles = Array.from(this.newsArticles.values());
+    if (sportType) {
+      articles = articles.filter(article => article.sportType === sportType);
+    }
+    return articles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  }
+
+  async deleteNewsArticle(id: number): Promise<boolean> {
+    return this.newsArticles.delete(id);
+  }
+
   // Helper method to populate sample matches
   private addSampleMatches() {
     const now = new Date();
-    
+
     // Add football matches
     this.createMatch({
       sportType: 'football',
@@ -283,7 +314,7 @@ export class MemStorage implements IStorage {
       status: 'live',
       currentTime: '75\''
     });
-    
+
     this.createMatch({
       sportType: 'football',
       team1: 'Barcelona',
@@ -297,7 +328,7 @@ export class MemStorage implements IStorage {
       status: 'upcoming',
       currentTime: '-'
     });
-    
+
     // Add cricket matches
     this.createMatch({
       sportType: 'cricket',
@@ -358,15 +389,15 @@ export class DatabaseStorage implements IStorage {
 
   async getMatches(filters?: { sportType?: string; status?: string }): Promise<Match[]> {
     let query = db.select().from(matches);
-    
+
     if (filters?.sportType) {
       query = query.where(eq(matches.sportType, filters.sportType as any));
     }
-    
+
     if (filters?.status) {
       query = query.where(eq(matches.status, filters.status as any));
     }
-    
+
     // Sort by matchTime descending (newest first)
     return await query.orderBy(desc(matches.matchTime));
   }
@@ -393,17 +424,17 @@ export class DatabaseStorage implements IStorage {
   async getFavoritesByUserId(userId: number): Promise<(Favorite & { match: Match })[]> {
     const userFavorites = await db.select().from(favorites)
       .where(eq(favorites.userId, userId));
-    
+
     const result = [];
     for (const favorite of userFavorites) {
       const [match] = await db.select().from(matches)
         .where(eq(matches.id, favorite.matchId));
-      
+
       if (match) {
         result.push({ ...favorite, match });
       }
     }
-    
+
     return result;
   }
 
@@ -413,7 +444,7 @@ export class DatabaseStorage implements IStorage {
     if (exists) {
       throw new Error("Match is already in favorites");
     }
-    
+
     const [newFavorite] = await db.insert(favorites).values(favorite).returning();
     return newFavorite;
   }
@@ -475,7 +506,24 @@ export class DatabaseStorage implements IStorage {
     return newFeedback;
   }
 
-  // Method to seed initial data
+  // News Article methods
+  async createNewsArticle(article: InsertNewsArticle): Promise<NewsArticle> {
+    const [newArticle] = await db.insert(newsArticles).values(article).returning();
+    return newArticle;
+  }
+
+  async getNewsArticles(sportType?: string): Promise<NewsArticle[]> {
+    let query = db.select().from(newsArticles).orderBy(desc(newsArticles.publishedAt));
+    if (sportType) {
+      query = query.where(eq(newsArticles.sportType, sportType));
+    }
+    return await query;
+  }
+
+  async deleteNewsArticle(id: number): Promise<boolean> {
+    const result = await db.delete(newsArticles).where(eq(newsArticles.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
   async seedInitialData(): Promise<void> {
     // Check if we already have admin user
     const adminUser = await this.getUserByEmail('admin@sportsapp.com');
@@ -494,7 +542,7 @@ export class DatabaseStorage implements IStorage {
     if (matchesCount.length === 0) {
       // Add sample matches
       const now = new Date();
-      
+
       // Add football matches
       await this.createMatch({
         sportType: 'football',
@@ -509,7 +557,7 @@ export class DatabaseStorage implements IStorage {
         status: 'live',
         currentTime: '75\''
       });
-      
+
       await this.createMatch({
         sportType: 'football',
         team1: 'Barcelona',
@@ -523,7 +571,7 @@ export class DatabaseStorage implements IStorage {
         status: 'upcoming',
         currentTime: '-'
       });
-      
+
       // Add cricket matches
       await this.createMatch({
         sportType: 'cricket',

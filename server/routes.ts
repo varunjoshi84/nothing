@@ -441,9 +441,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // EXTERNAL SPORTS API - use mock data for now since we're having API issues
   app.get('/api/sports-news', async (req, res) => {
     try {
-      const sport = req.query.sport || 'football';
+      const sport = req.query.sport as string;
+      const articles = await storage.getNewsArticles(sport);
+      res.json({ articles });
+    } catch (error) {
+      console.error('Sports news error:', error);
+      res.json({ articles: [] });
+    }
+  });
 
-      // Generate relevant news based on requested sport
+  app.post('/api/admin/news', isAdmin, async (req, res) => {
+    try {
+      const article = await storage.createNewsArticle(req.body);
+      res.status(201).json({ article });
+    } catch (error) {
+      console.error('Create news error:', error);
+      res.status(500).json({ message: 'Server error while creating news article' });
+    }
+  });
+
+  app.delete('/api/admin/news/:id', isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteNewsArticle(id);
+      if (!success) {
+        return res.status(404).json({ message: 'News article not found' });
+      }
+      res.json({ message: 'News article deleted successfully' });
+    } catch (error) {
+      console.error('Delete news error:', error);
+      res.status(500).json({ message: 'Server error while deleting news article' });
+    }
+  });
+
+  // SPORTS NEWS API MOCK - Fallback if no articles in database
+  app.get('/api/sports-news/mock', async (req, res) => {
+    try {
+      const sport = req.query.sport || 'football';
       const mockArticles = [];
 
       if (sport === 'football') {
