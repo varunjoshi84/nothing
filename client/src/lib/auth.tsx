@@ -48,10 +48,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (data: LoginData): Promise<User> => {
-      const res = await apiRequest("POST", "/api/login", data);
-      return await res.json();
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include"
+      });
+      if (!res.ok) {
+        throw new Error('Login failed');
+      }
+      const json = await res.json();
+      return json.user;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     }
   });
@@ -59,10 +70,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterData): Promise<User> => {
-      const res = await apiRequest("POST", "/api/register", data);
-      return await res.json();
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include"
+      });
+      if (!res.ok) {
+        throw new Error('Registration failed');
+      }
+      const json = await res.json();
+      return json.user;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     }
   });

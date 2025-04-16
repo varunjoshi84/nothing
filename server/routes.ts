@@ -127,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // AUTH ROUTES
-  app.post('/api/auth/register', validateRequest(registerSchema), async (req, res) => {
+  app.post('/api/register', validateRequest(registerSchema), async (req, res) => {
     try {
       const { username, email, password } = req.body;
       
@@ -169,7 +169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/login', validateRequest(loginSchema), (req, res) => {
+  app.post('/api/login', validateRequest(loginSchema), (req, res) => {
     passport.authenticate('local', (err, user, info) => {
       if (err) {
         return res.status(500).json({ message: 'Internal server error' });
