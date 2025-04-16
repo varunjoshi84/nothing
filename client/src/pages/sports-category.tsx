@@ -51,10 +51,16 @@ export default function SportsCategory({ type }: SportsCategoryProps) {
   const matches = matchesData?.matches || [];
   const favorites = favoritesData?.favorites || [];
   
-  // Filter matches by status
-  const liveMatches = matches.filter((match: Match) => match.status === 'live');
-  const upcomingMatches = matches.filter((match: Match) => match.status === 'upcoming');
-  const completedMatches = matches.filter((match: Match) => match.status === 'completed');
+  // Filter matches by status and sport type
+  const liveMatches = matches.filter((match: Match) => 
+    match.status === 'live' && match.sportType === sportType
+  );
+  const upcomingMatches = matches.filter((match: Match) => 
+    match.status === 'upcoming' && match.sportType === sportType
+  );
+  const completedMatches = matches.filter((match: Match) => 
+    match.status === 'completed' && match.sportType === sportType
+  );
   
   // Check if a match is in favorites
   const isMatchFavorited = (matchId: number) => {

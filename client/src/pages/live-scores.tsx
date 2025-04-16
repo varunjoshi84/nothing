@@ -34,15 +34,29 @@ export default function LiveScores() {
     return favorites.some((fav: any) => fav.matchId === matchId);
   };
 
-  // Filter matches by search term
+  // Filter matches by all criteria
   const filteredMatches = matches.filter((match: Match) => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      match.team1.toLowerCase().includes(searchLower) ||
-      match.team2.toLowerCase().includes(searchLower) ||
-      match.venue?.toLowerCase().includes(searchLower)
-    );
+    // Status filter
+    if (statusFilter && statusFilter !== 'all' && match.status !== statusFilter) {
+      return false;
+    }
+
+    // Sport filter
+    if (sportFilter && match.sportType !== sportFilter) {
+      return false;
+    }
+
+    // Search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        match.team1.toLowerCase().includes(searchLower) ||
+        match.team2.toLowerCase().includes(searchLower) ||
+        match.venue?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return true;
   });
 
   return (
