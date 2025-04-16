@@ -46,11 +46,25 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
     try {
       setIsLoggingIn(true);
       await login(values);
-      if (onSuccess) onSuccess();
+      toast({
+        title: "Login successful",
+        description: "Welcome back to SportSync!",
+      });
+      if (onSuccess) {
+        onSuccess();
+      }
       setLocation('/dashboard');
-
-      if (response.ok) { // Check for successful login response
-        toast({
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "Invalid credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }
           title: "Login successful",
           description: "Welcome back to SportSync!",
         });
