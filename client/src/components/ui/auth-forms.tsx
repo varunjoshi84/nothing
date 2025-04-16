@@ -45,7 +45,9 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
   async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     try {
       setIsLoggingIn(true);
-      const response = await login(values); // Assuming login returns a response
+      await login(values);
+      if (onSuccess) onSuccess();
+      setLocation('/dashboard');
 
       if (response.ok) { // Check for successful login response
         toast({

@@ -56,13 +56,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(data),
         credentials: "include"
       });
-      if (!res.ok) {
-        throw new Error('Login failed');
-      }
       const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.message || 'Login failed');
+      }
       return json.user;
     },
-    onSuccess: () => {
+    onSuccess: (user) => {
+      queryClient.setQueryData(['/api/user'], user);
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     }
   });
