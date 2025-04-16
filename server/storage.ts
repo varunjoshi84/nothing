@@ -315,4 +315,232 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Match methods
+  async getMatch(id: number): Promise<Match | undefined> {
+    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    return match;
+  }
+
+  async getMatches(filters?: { sportType?: string; status?: string }): Promise<Match[]> {
+    let query = db.select().from(matches);
+    
+    if (filters?.sportType) {
+      query = query.where(eq(matches.sportType, filters.sportType as any));
+    }
+    
+    if (filters?.status) {
+      query = query.where(eq(matches.status, filters.status as any));
+    }
+    
+    // Sort by matchTime descending (newest first)
+    return await query.orderBy(desc(matches.matchTime));
+  }
+
+  async createMatch(match: InsertMatch): Promise<Match> {
+    const [newMatch] = await db.insert(matches).values(match).returning();
+    return newMatch;
+  }
+
+  async updateMatch(id: number, matchData: Partial<InsertMatch>): Promise<Match | undefined> {
+    const [updatedMatch] = await db.update(matches)
+      .set(matchData)
+      .where(eq(matches.id, id))
+      .returning();
+    return updatedMatch;
+  }
+
+  async deleteMatch(id: number): Promise<boolean> {
+    const result = await db.delete(matches).where(eq(matches.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Favorites methods
+  async getFavoritesByUserId(userId: number): Promise<(Favorite & { match: Match })[]> {
+    const userFavorites = await db.select().from(favorites)
+      .where(eq(favorites.userId, userId));
+    
+    const result = [];
+    for (const favorite of userFavorites) {
+      const [match] = await db.select().from(matches)
+        .where(eq(matches.id, favorite.matchId));
+      
+      if (match) {
+        result.push({ ...favorite, match });
+      }
+    }
+    
+    return result;
+  }
+
+  async addFavorite(favorite: InsertFavorite): Promise<Favorite> {
+    // Check if already exists
+    const exists = await this.isFavorite(favorite.userId, favorite.matchId);
+    if (exists) {
+      throw new Error("Match is already in favorites");
+    }
+    
+    const [newFavorite] = await db.insert(favorites).values(favorite).returning();
+    return newFavorite;
+  }
+
+  async removeFavorite(userId: number, matchId: number): Promise<boolean> {
+    const result = await db.delete(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.matchId, matchId)
+        )
+      );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async isFavorite(userId: number, matchId: number): Promise<boolean> {
+    const [favorite] = await db.select().from(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.matchId, matchId)
+        )
+      );
+    return !!favorite;
+  }
+
+  // Notification methods
+  async getNotificationsByUserId(userId: number): Promise<Notification[]> {
+    return await db.select().from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db.insert(notifications)
+      .values(notification)
+      .returning();
+    return newNotification;
+  }
+
+  async markNotificationAsRead(id: number): Promise<Notification | undefined> {
+    const [updatedNotification] = await db.update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updatedNotification;
+  }
+
+  // Feedback methods
+  async getFeedback(): Promise<Feedback[]> {
+    return await db.select().from(feedback)
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async submitFeedback(feedbackData: InsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db.insert(feedback)
+      .values(feedbackData)
+      .returning();
+    return newFeedback;
+  }
+
+  // Method to seed initial data
+  async seedInitialData(): Promise<void> {
+    // Check if we already have admin user
+    const adminUser = await this.getUserByEmail('admin@sportsapp.com');
+    if (!adminUser) {
+      // Create admin user
+      await this.createUser({
+        username: 'admin',
+        email: 'admin@sportsapp.com',
+        password: '$2b$10$OI.0/FxL1bfXVU3KQhKUKuw8dBVS.KbPgqrA8UKa9xSbZiW.MDBLu', // hashed 'admin123'
+        role: 'admin'
+      });
+    }
+
+    // Check if we need to add sample matches
+    const matchesCount = await db.select().from(matches);
+    if (matchesCount.length === 0) {
+      // Add sample matches
+      const now = new Date();
+      
+      // Add football matches
+      await this.createMatch({
+        sportType: 'football',
+        team1: 'Arsenal',
+        team2: 'Liverpool',
+        team1Logo: 'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg',
+        team2Logo: 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+        score1: '2',
+        score2: '1',
+        venue: 'Emirates Stadium',
+        matchTime: new Date(now.getTime() - 30 * 60000), // 30 minutes ago
+        status: 'live',
+        currentTime: '75\''
+      });
+      
+      await this.createMatch({
+        sportType: 'football',
+        team1: 'Barcelona',
+        team2: 'Real Madrid',
+        team1Logo: 'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
+        team2Logo: 'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg',
+        score1: '-',
+        score2: '-',
+        venue: 'Camp Nou, Barcelona',
+        matchTime: new Date(now.getTime() + 24 * 3600000), // Tomorrow
+        status: 'upcoming',
+        currentTime: '-'
+      });
+      
+      // Add cricket matches
+      await this.createMatch({
+        sportType: 'cricket',
+        team1: 'India',
+        team2: 'Pakistan',
+        team1Logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Flag_of_India.png',
+        team2Logo: 'https://upload.wikimedia.org/wikipedia/commons/3/32/Flag_of_Pakistan.svg',
+        score1: '187/4',
+        score2: 'Yet to bat',
+        venue: 'MCG, Melbourne',
+        matchTime: new Date(now.getTime() - 2 * 3600000), // 2 hours ago
+        status: 'live',
+        currentTime: '32.4 Overs'
+      });
+    }
+  }
+}
+
+// Create and initialize the storage instance
+export const storage = new DatabaseStorage();
