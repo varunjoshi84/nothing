@@ -65,33 +65,7 @@ export default function AuthForms({ initialTab = 'login', onSuccess }: AuthForms
       setIsLoggingIn(false);
     }
   }
-          title: "Login successful",
-          description: "Welcome back to SportSync!",
-        });
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          setLocation("/dashboard");
-        }
-      } else {
-        const responseData = await response.json();
-        toast({
-          title: "Login Failed",
-          description: responseData.message || "Invalid credentials",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Error",
-        description: "An error occurred during login",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoggingIn(false);
-    }
-  }
+          
 
   // Register form
   const registerForm = useForm<z.infer<typeof registerSchema>>({
