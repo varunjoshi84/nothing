@@ -13,6 +13,7 @@ export default function Home() {
   const { user } = useAuth();
   const [location] = useLocation();
   const [, setLocation] = useLocation();
+  const [activeSport, setActiveSport] = useState<"football" | "cricket" | undefined>(undefined);
   
   // State for news carousel
   const [newsData, setNewsData] = useState<any[]>([]);
@@ -199,9 +200,27 @@ export default function Home() {
             </div>
             
             <div className="mt-4 md:mt-0 flex space-x-2">
-              <Button variant="secondary" className="bg-gray-800 hover:bg-gray-700">All</Button>
-              <Button>Football</Button>
-              <Button variant="secondary" className="bg-gray-800 hover:bg-gray-700">Cricket</Button>
+              <Button 
+                variant={!activeSport ? "default" : "secondary"} 
+                className={!activeSport ? "" : "bg-gray-800 hover:bg-gray-700"}
+                onClick={() => setActiveSport(undefined)}
+              >
+                All
+              </Button>
+              <Button 
+                variant={activeSport === "football" ? "default" : "secondary"}
+                className={activeSport === "football" ? "" : "bg-gray-800 hover:bg-gray-700"}
+                onClick={() => setActiveSport("football")}
+              >
+                Football
+              </Button>
+              <Button 
+                variant={activeSport === "cricket" ? "default" : "secondary"}
+                className={activeSport === "cricket" ? "" : "bg-gray-800 hover:bg-gray-700"}
+                onClick={() => setActiveSport("cricket")}
+              >
+                Cricket
+              </Button>
             </div>
           </div>
           
@@ -214,12 +233,15 @@ export default function Home() {
             </div>
           ) : liveMatchesCount > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(matchesData?.matches || []).slice(0, 3).map((match: Match) => (
-                <MatchCard 
-                  key={match.id} 
-                  match={match}
-                />
-              ))}
+              {(matchesData?.matches || [])
+                .filter((match: Match) => !activeSport || match.sportType === activeSport)
+                .slice(0, 3)
+                .map((match: Match) => (
+                  <MatchCard 
+                    key={match.id} 
+                    match={match}
+                  />
+                ))}
             </div>
           ) : (
             <div className="text-center py-10 bg-gray-800/20 rounded-xl border border-gray-800">
