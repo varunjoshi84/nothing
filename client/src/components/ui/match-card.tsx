@@ -153,6 +153,25 @@ export default function MatchCard({ match, isFavorite = false, showActions = tru
                   variant="ghost" 
                   size="sm" 
                   className="flex items-center gap-1 text-gray-400 hover:text-red-600 hover:bg-transparent"
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/notifications/check-upcoming', {
+                        method: 'POST',
+                        credentials: 'include'
+                      });
+                      toast({
+                        title: "Notification Set",
+                        description: "You will be notified before the match starts",
+                      });
+                    } catch (error) {
+                      console.error('Error setting notification:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to set notification",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                 >
                   <Bell className="h-4 w-4" />
                   <span className="text-sm">Notify</span>

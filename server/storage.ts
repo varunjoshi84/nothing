@@ -538,6 +538,9 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Check if we need to add sample matches
+    // Initialize news_articles table
+    await db.create().table(newsArticles).ifNotExists();
+    
     const matchesCount = await db.select().from(matches);
     if (matchesCount.length === 0) {
       // Add sample matches

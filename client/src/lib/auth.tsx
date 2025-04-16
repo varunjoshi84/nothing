@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (data: LoginData) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
   logout: () => Promise<void>;
+  authError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // Simple export for provider
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // User query to check logged in status
   const {
@@ -40,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return data.user;
       } catch (error) {
         console.error("Error fetching user:", error);
+        setAuthError(error.message); //Added error handling
         return null;
       } finally {
         setIsInitialized(true);
@@ -59,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(data),
           credentials: "include"
         });
-        
+
         const json = await res.json();
         if (!res.ok) {
           throw new Error(json.message || 'Login failed');
@@ -67,11 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return json.user;
       } catch (error) {
         console.error('Login error:', error);
+        setAuthError(error.message); //Added error handling
         throw error;
       }
     },
     onSuccess: (user) => {
       queryClient.setQueryData(['/api/user'], user);
+      setAuthError(null); //Clear error on success
     }
   });
 
@@ -87,13 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         credentials: "include"
       });
       if (!res.ok) {
-        throw new Error('Registration failed');
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
       const json = await res.json();
       return json.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      setAuthError(null); //Clear error on success
+    },
+    onError: (error) => {
+      setAuthError(error.message); //Added error handling
     }
   });
 
@@ -104,6 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(['/api/user'], null);
+      setAuthError(null); //Clear error on success
+    },
+    onError: (error) => {
+      setAuthError(error.message); //Added error handling
     }
   });
 
@@ -126,7 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: isLoading && !isInitialized,
     login,
     register,
-    logout
+    logout,
+    authError
   };
 
   // Return provider with value
